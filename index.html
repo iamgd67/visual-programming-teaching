@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="./browser_4.1.6_index.global.js"></script>
+    <link href="./fontawesome/css/font-awesome_6.7.2_all.min.css" rel="stylesheet">
+    <title>编程概念演示</title>
+    <style>
+        .grid-cell {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        .filled {
+            background-color: #000;
+        }
+
+        #board {
+            display: flex;
+            flex-wrap: wrap;
+            width: calc(16 * 20px);
+        }
+
+        .current-cell {
+            border: 2px solid red;
+        }
+
+        .command-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 10px;
+        }
+
+        .command-arrow {
+            width: 20px;
+            height: 20px;
+            background-color: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+        }
+
+        .command-arrow.current {
+            border: 2px solid red;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 flex flex-col items-center justify-center">
+    <div id="board" class="flex flex-wrap mb-4"></div>
+    <div class="command-display" id="command-display"></div>
+    <div class="flex gap-2 mt-2">
+        <button id="execute-button" class="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">执行</button>
+        <button id="clear-button" class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600">清除指令</button>
+        <button id="clear-board-button" class="bg-yellow-500 text-white p-2 rounded-md hover:bg-yellow-600">清除画板</button>
+    </div>
+    <div class="mt-4 text-sm text-gray-600">
+        <p>使用方向键 (↑↓←→) 移动，空格键填充</p>
+    </div>
+    <div class=" mt-2">
+        <button id="example-button" class="bg-green-500 text-white p-2 rounded-md hover:bg-green-600">写出刘字示例</button>
+
+    </div>
+
+    <script>
+        const board = document.getElementById('board');
+        const commandDisplay = document.getElementById('command-display');
+        const executeButton = document.getElementById('execute-button');
+        const exampleButton = document.getElementById('example-button');
+        const clearButton = document.getElementById('clear-button');
+        const clearBoardButton = document.getElementById('clear-board-button');
+        const gridSize = 16;
+        let currentX = 0;
+        let currentY = 0;
+        let commands = [];
+        let isExecuting = false;
+        let currentCommandIndex = 0;
+
+        // 创建画板
+        for (let y = 0; y < gridSize; y++) {
+            const row = document.createDocumentFragment();
+            for (let x = 0; x < gridSize; x++) {
+                const cell = document.createElement('div');
+                cell.classList.add('grid-cell');
+                row.appendChild(cell);
+            }
+            board.appendChild(row);
+            console.log(`第 ${y + 1} 行格子已输出`);
+        }
+
+        // 获取当前格子元素
+        function getCurrentCell() {
+            return board.children[currentY * gridSize + currentX];
+        }
+
+        // 移除之前的当前格子标记
+        function removeCurrentCellMarker() {
+            const prevCell = board.querySelector('.current-cell');
+            if (prevCell) {
+                prevCell.classList.remove('current-cell');
+            }
+        }
+
+        // 标记当前格子
+        function markCurrentCell() {
+            const currentCell = getCurrentCell();
+            currentCell.classList.add('current-cell');
+        }
+
+        // 移除之前的当前指令标记
+        function removeCurrentCommandMarker() {
+            const prevCommand = commandDisplay.querySelector('.command-arrow.current');
+            if (prevCommand) {
+                prevCommand.classList.remove('current');
+            }
+        }
+
+        // 标记当前指令
+        function markCurrentCommand(index) {
+            removeCurrentCommandMarker();
+            if (index < commandDisplay.children.length) {
+                commandDisplay.children[index].classList.add('current');
+            }
+        }
+
+        // 添加指令到显示区域
+        function addCommandToDisplay(command) {
+            const commandElement = document.createElement('div');
+            commandElement.classList.add('command-arrow');
+            
+            switch (command) {
+                case 'u':
+                    commandElement.innerHTML = '<i class="fa-solid fa-arrow-up"></i>';
+                    break;
+                case 'd':
+                    commandElement.innerHTML = '<i class="fa-solid fa-arrow-down"></i>';
+                    break;
+                case 'l':
+                    commandElement.innerHTML = '<i class="fa-solid fa-arrow-left"></i>';
+                    break;
+                case 'r':
+                    commandElement.innerHTML = '<i class="fa-solid fa-arrow-right"></i>';
+                    break;
+                case 'f':
+                    commandElement.innerHTML = '<i class="fa-solid fa-square"></i>';
+                    break;
+            }
+            
+            commandDisplay.appendChild(commandElement);
+        }
+
+        // 执行指令
+        function executeCommand(command) {
+            removeCurrentCellMarker();
+            switch (command) {
+                case 'u':
+                    if (currentY > 0) currentY--;
+                    break;
+                case 'd':
+                    if (currentY < gridSize - 1) currentY++;
+                    break;
+                case 'l':
+                    if (currentX > 0) currentX--;
+                    break;
+                case 'r':
+                    if (currentX < gridSize - 1) currentX++;
+                    break;
+                case 'f':
+                    getCurrentCell().classList.add('filled');
+                    break;
+            }
+            markCurrentCell();
+        }
+
+        // 按 0.5 秒间隔执行指令
+        function executeCommandsSequentially(commands) {
+            if (isExecuting) return;
+            isExecuting = true;
+            currentCommandIndex = 0;
+            
+            function executeNext() {
+                if (currentCommandIndex < commands.length) {
+                    removeCurrentCommandMarker();
+                    const command = commands[currentCommandIndex];
+                    if (command) {
+                        executeCommand(command);
+                        markCurrentCommand(currentCommandIndex);
+                    }
+                    currentCommandIndex++;
+                    setTimeout(executeNext, 50);
+                } else {
+                    isExecuting = false;
+                    removeCurrentCommandMarker();
+                }
+            }
+            
+            executeNext();
+        }
+
+        // 模拟字库
+        const fontLibrary = {
+            '刘': [[0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0],
+[0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0],
+[0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0],
+[1,1,1,1,1,1,1,1,1,0,1,0,0,1,0,0],
+[0,0,0,0,0,0,1,0,0,0,1,0,0,1,0,0],
+[0,1,0,0,0,0,1,0,0,0,1,0,0,1,0,0],
+[0,0,1,0,0,0,1,0,0,0,1,0,0,1,0,0],
+[0,0,0,1,0,1,0,0,0,0,1,0,0,1,0,0],
+[0,0,0,1,0,1,0,0,0,0,1,0,0,1,0,0],
+[0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0],
+[0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0],
+[0,0,0,1,0,1,0,0,0,0,1,0,0,1,0,0],
+[0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0],
+[0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,0],
+[1,0,0,0,0,0,1,0,0,0,0,1,0,1,0,0],
+[0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0]]
+        };
+
+        // 根据字库生成指令
+        function generateCommandsFromFont(fontMatrix) {
+            let commands = '';
+            let moveDir=1;//left or right
+            for (let y = 0; y < gridSize; y++) {
+                let xInit=0;
+                if(moveDir<0){
+                    xInit=gridSize;
+                }
+                for (let x = xInit; (moveDir>0 && x < gridSize ) || (moveDir < 0 && x >=0); x+=moveDir) {
+                    if (x > 0 && moveDir>0) {
+                        commands += 'r';
+                    }
+                    else if(x<gridSize-1 && moveDir<0){
+                        commands += 'l';
+                    }
+                    if (fontMatrix[y][x] === 1) {
+                        commands += 'f';
+                    }
+                }
+                if (y < gridSize - 1) {
+                    commands += 'd';
+                    moveDir*=-1;
+                }
+            }
+            return commands;
+        }
+
+        // 生成刘字指令
+        const liuCommands = generateCommandsFromFont(fontLibrary['刘']);
+
+        // 清除画板
+        function clearBoard() {
+            if (isExecuting) return;
+            
+            const cells = board.querySelectorAll('.grid-cell');
+            cells.forEach(cell => {
+                cell.classList.remove('filled');
+            });
+        }
+
+        // 绑定键盘事件
+        document.addEventListener('keydown', (event) => {
+            if (isExecuting) return;
+            
+            let command = '';
+            
+            switch (event.key) {
+                case 'ArrowUp':
+                    command = 'u';
+                    break;
+                case 'ArrowDown':
+                    command = 'd';
+                    break;
+                case 'ArrowLeft':
+                    command = 'l';
+                    break;
+                case 'ArrowRight':
+                    command = 'r';
+                    break;
+                case ' ':
+                    command = 'f';
+                    event.preventDefault(); // 防止空格滚动页面
+                    break;
+                default:
+                    return; // 忽略其他按键
+            }
+            
+            commands.push(command);
+            addCommandToDisplay(command);
+        });
+
+        // 绑定示例按钮点击事件
+        exampleButton.addEventListener('click', () => {
+            if (isExecuting) return;
+            
+            // 清空当前指令
+            commands = [];
+            commandDisplay.innerHTML = '';
+            
+            // 添加刘字指令
+            for (const command of liuCommands) {
+                commands.push(command);
+                addCommandToDisplay(command);
+            }
+            
+            // 执行刘字指令
+            executeCommandsSequentially(commands);
+        });
+
+        // 绑定执行按钮点击事件
+        executeButton.addEventListener('click', () => {
+            if (isExecuting) return;
+            executeCommandsSequentially(commands);
+        });
+
+        // 绑定清除按钮点击事件
+        clearButton.addEventListener('click', () => {
+            if (isExecuting) return;
+            
+            // 清空指令
+            commands = [];
+            commandDisplay.innerHTML = '';
+            
+            // 重置当前位置
+            removeCurrentCellMarker();
+            currentX = 0;
+            currentY = 0;
+            markCurrentCell();
+        });
+
+        // 绑定清除画板按钮点击事件
+        clearBoardButton.addEventListener('click', clearBoard);
+
+        // 初始化当前格子标记
+        markCurrentCell();
+    </script>
+</body>
+
+</html>
+    
