@@ -4,12 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="./browser_4.1.6_index.global.js"></script>
-    <link href="./fontawesome/css/font-awesome_6.7.2_all.min.css" rel="stylesheet">
-
-    <script src="https://unpkg.com/@tailwindcss/browser@4.1.6/dist/index.global.js" async></script>
+    <script src="https://unpkg.com/@tailwindcss/browser@4.1.6/dist/index.global.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
-    
     <title>编程概念演示</title>
     <style>
         .grid-cell {
@@ -63,13 +59,23 @@
         <button id="execute-button" class="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">执行</button>
         <button id="clear-button" class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600">清除指令</button>
         <button id="clear-board-button" class="bg-yellow-500 text-white p-2 rounded-md hover:bg-yellow-600">清除画板</button>
+        
+        <!-- 新增执行速度下拉框 -->
+        <div class="ml-2">
+            <label for="speed-select" class="text-sm text-gray-600 mr-1">执行速度:</label>
+            <select id="speed-select" class="p-1 border rounded">
+                <option value="500">500ms</option>
+                <option value="100">100ms</option>
+                <option value="50">50ms</option>
+            </select>
+        </div>
     </div>
     <div class="mt-4 text-sm text-gray-600">
         <p>使用方向键 (↑↓←→) 移动，空格键填充</p>
     </div>
-    <div class=" mt-2">
+    <div class="mt-2 flex gap-2">
+        <button id="square-example-button" class="bg-purple-500 text-white p-2 rounded-md hover:bg-purple-600">画方框示例</button>
         <button id="example-button" class="bg-green-500 text-white p-2 rounded-md hover:bg-green-600">写出刘字示例</button>
-
     </div>
 
     <script>
@@ -79,12 +85,18 @@
         const exampleButton = document.getElementById('example-button');
         const clearButton = document.getElementById('clear-button');
         const clearBoardButton = document.getElementById('clear-board-button');
+        const squareExampleButton = document.getElementById('square-example-button');
+        // 获取速度选择下拉框
+        const speedSelect = document.getElementById('speed-select');
+        
         const gridSize = 16;
         let currentX = 0;
         let currentY = 0;
         let commands = [];
         let isExecuting = false;
         let currentCommandIndex = 0;
+        // 默认执行速度
+        let executionSpeed = 500;
 
         // 创建画板
         for (let y = 0; y < gridSize; y++) {
@@ -137,7 +149,7 @@
         function addCommandToDisplay(command) {
             const commandElement = document.createElement('div');
             commandElement.classList.add('command-arrow');
-            
+
             switch (command) {
                 case 'u':
                     commandElement.innerHTML = '<i class="fa-solid fa-arrow-up"></i>';
@@ -155,7 +167,7 @@
                     commandElement.innerHTML = '<i class="fa-solid fa-square"></i>';
                     break;
             }
-            
+
             commandDisplay.appendChild(commandElement);
         }
 
@@ -182,12 +194,12 @@
             markCurrentCell();
         }
 
-        // 按 0.5 秒间隔执行指令
+        // 按用户选择的速度执行指令
         function executeCommandsSequentially(commands) {
             if (isExecuting) return;
             isExecuting = true;
             currentCommandIndex = 0;
-            
+
             function executeNext() {
                 if (currentCommandIndex < commands.length) {
                     removeCurrentCommandMarker();
@@ -197,50 +209,51 @@
                         markCurrentCommand(currentCommandIndex);
                     }
                     currentCommandIndex++;
-                    setTimeout(executeNext, 50);
+                    setTimeout(executeNext, executionSpeed);
                 } else {
                     isExecuting = false;
                     removeCurrentCommandMarker();
                 }
             }
-            
+
             executeNext();
         }
 
         // 模拟字库
         const fontLibrary = {
-            '刘': [[0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0],
-[0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0],
-[0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0],
-[1,1,1,1,1,1,1,1,1,0,1,0,0,1,0,0],
-[0,0,0,0,0,0,1,0,0,0,1,0,0,1,0,0],
-[0,1,0,0,0,0,1,0,0,0,1,0,0,1,0,0],
-[0,0,1,0,0,0,1,0,0,0,1,0,0,1,0,0],
-[0,0,0,1,0,1,0,0,0,0,1,0,0,1,0,0],
-[0,0,0,1,0,1,0,0,0,0,1,0,0,1,0,0],
-[0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0],
-[0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0],
-[0,0,0,1,0,1,0,0,0,0,1,0,0,1,0,0],
-[0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0],
-[0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,0],
-[1,0,0,0,0,0,1,0,0,0,0,1,0,1,0,0],
-[0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0]]
+            '刘': [
+                [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+                [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+                [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0],
+                [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0],
+                [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0],
+                [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0],
+                [0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0],
+                [0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0],
+                [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0],
+                [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0],
+                [0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0],
+                [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+                [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+                [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+            ]
         };
 
         // 根据字库生成指令
         function generateCommandsFromFont(fontMatrix) {
             let commands = '';
-            let moveDir=1;//left or right
+            let moveDir = 1; // left or right
             for (let y = 0; y < gridSize; y++) {
-                let xInit=0;
-                if(moveDir<0){
-                    xInit=gridSize;
+                let xInit = 0;
+                if (moveDir < 0) {
+                    xInit = gridSize;
                 }
-                for (let x = xInit; (moveDir>0 && x < gridSize ) || (moveDir < 0 && x >=0); x+=moveDir) {
-                    if (x > 0 && moveDir>0) {
+                for (let x = xInit; (moveDir > 0 && x < gridSize) || (moveDir < 0 && x >= 0); x += moveDir) {
+                    if (x > 0 && moveDir > 0) {
                         commands += 'r';
-                    }
-                    else if(x<gridSize-1 && moveDir<0){
+                    } else if (x < gridSize - 1 && moveDir < 0) {
                         commands += 'l';
                     }
                     if (fontMatrix[y][x] === 1) {
@@ -249,7 +262,7 @@
                 }
                 if (y < gridSize - 1) {
                     commands += 'd';
-                    moveDir*=-1;
+                    moveDir *= -1;
                 }
             }
             return commands;
@@ -258,22 +271,58 @@
         // 生成刘字指令
         const liuCommands = generateCommandsFromFont(fontLibrary['刘']);
 
+        // 生成6×6方框指令
+        function generateSquareCommands() {
+            let commands = '';
+            const size = 6; // 方框大小
+
+            // 画上边
+            for (let i = 0; i < size; i++) {
+                commands += 'r';
+                commands += 'f';
+            }
+            // 画右边
+            for (let i = 0; i < size; i++) {
+                commands += 'd';
+                commands += 'f';
+            }
+            // 画下边
+            for (let i = 0; i < size; i++) {
+                commands += 'l';
+                commands += 'f';
+            }
+            // 画左边
+            for (let i = 0; i < size; i++) {
+                commands += 'u';
+                commands += 'f';
+            }
+
+            return commands;
+        }
+
+        const squareCommands = generateSquareCommands();
+
         // 清除画板
         function clearBoard() {
             if (isExecuting) return;
-            
+
             const cells = board.querySelectorAll('.grid-cell');
             cells.forEach(cell => {
                 cell.classList.remove('filled');
             });
         }
 
+        // 更新执行速度
+        function updateExecutionSpeed() {
+            executionSpeed = parseInt(speedSelect.value);
+        }
+
         // 绑定键盘事件
         document.addEventListener('keydown', (event) => {
             if (isExecuting) return;
-            
+
             let command = '';
-            
+
             switch (event.key) {
                 case 'ArrowUp':
                     command = 'u';
@@ -294,7 +343,7 @@
                 default:
                     return; // 忽略其他按键
             }
-            
+
             commands.push(command);
             addCommandToDisplay(command);
         });
@@ -302,18 +351,36 @@
         // 绑定示例按钮点击事件
         exampleButton.addEventListener('click', () => {
             if (isExecuting) return;
-            
+
             // 清空当前指令
             commands = [];
             commandDisplay.innerHTML = '';
-            
+
             // 添加刘字指令
             for (const command of liuCommands) {
                 commands.push(command);
                 addCommandToDisplay(command);
             }
-            
+
             // 执行刘字指令
+            executeCommandsSequentially(commands);
+        });
+
+        // 绑定画方框示例按钮点击事件
+        squareExampleButton.addEventListener('click', () => {
+            if (isExecuting) return;
+
+            // 清空当前指令
+            commands = [];
+            commandDisplay.innerHTML = '';
+
+            // 添加画方框指令
+            for (const command of squareCommands) {
+                commands.push(command);
+                addCommandToDisplay(command);
+            }
+
+            // 执行画方框指令
             executeCommandsSequentially(commands);
         });
 
@@ -326,11 +393,11 @@
         // 绑定清除按钮点击事件
         clearButton.addEventListener('click', () => {
             if (isExecuting) return;
-            
+
             // 清空指令
             commands = [];
             commandDisplay.innerHTML = '';
-            
+
             // 重置当前位置
             removeCurrentCellMarker();
             currentX = 0;
@@ -341,10 +408,12 @@
         // 绑定清除画板按钮点击事件
         clearBoardButton.addEventListener('click', clearBoard);
 
+        // 绑定速度选择下拉框事件
+        speedSelect.addEventListener('change', updateExecutionSpeed);
+
         // 初始化当前格子标记
         markCurrentCell();
     </script>
 </body>
 
 </html>
-    
