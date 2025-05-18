@@ -59,7 +59,7 @@
         <button id="execute-button" class="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">执行</button>
         <button id="clear-button" class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600">清除指令</button>
         <button id="clear-board-button" class="bg-yellow-500 text-white p-2 rounded-md hover:bg-yellow-600">清除画板</button>
-        
+
         <!-- 新增执行速度下拉框 -->
         <div class="ml-2">
             <label for="speed-select" class="text-sm text-gray-600 mr-1">执行速度:</label>
@@ -68,6 +68,11 @@
                 <option value="100">100ms</option>
                 <option value="50">50ms</option>
             </select>
+        </div>
+        <!-- 新增演示模式开关 -->
+        <div class="ml-2">
+            <label for="demo-mode-checkbox" class="text-sm text-gray-600 mr-1">演示模式:</label>
+            <input type="checkbox" id="demo-mode-checkbox">
         </div>
     </div>
     <div class="mt-4 text-sm text-gray-600">
@@ -88,7 +93,9 @@
         const squareExampleButton = document.getElementById('square-example-button');
         // 获取速度选择下拉框
         const speedSelect = document.getElementById('speed-select');
-        
+        // 获取演示模式开关
+        const demoModeCheckbox = document.getElementById('demo-mode-checkbox');
+
         const gridSize = 16;
         let currentX = 0;
         let currentY = 0;
@@ -97,6 +104,8 @@
         let currentCommandIndex = 0;
         // 默认执行速度
         let executionSpeed = 500;
+        // 演示模式开关
+        let isDemoMode = false;
 
         // 创建画板
         for (let y = 0; y < gridSize; y++) {
@@ -310,11 +319,23 @@
             cells.forEach(cell => {
                 cell.classList.remove('filled');
             });
+            
+            // 重置当前位置到左上角
+            removeCurrentCellMarker();
+            currentX = 0;
+            currentY = 0;
+            markCurrentCell();
         }
 
-        // 更新执行速度
+        // 更新执行速度（修复后的代码）
         function updateExecutionSpeed() {
             executionSpeed = parseInt(speedSelect.value);
+            console.log(`执行速度已更新为: ${executionSpeed}ms`);
+        }
+
+        // 切换演示模式
+        function toggleDemoMode() {
+            isDemoMode = demoModeCheckbox.checked;
         }
 
         // 绑定键盘事件
@@ -346,6 +367,11 @@
 
             commands.push(command);
             addCommandToDisplay(command);
+
+            // 如果处于演示模式，立即执行指令
+            if (isDemoMode) {
+                executeCommand(command);
+            }
         });
 
         // 绑定示例按钮点击事件
@@ -408,11 +434,17 @@
         // 绑定清除画板按钮点击事件
         clearBoardButton.addEventListener('click', clearBoard);
 
-        // 绑定速度选择下拉框事件
+        // 绑定速度选择下拉框事件（修复后的代码）
         speedSelect.addEventListener('change', updateExecutionSpeed);
+
+        // 绑定演示模式开关事件
+        demoModeCheckbox.addEventListener('change', toggleDemoMode);
 
         // 初始化当前格子标记
         markCurrentCell();
+        
+        // 初始化执行速度
+        updateExecutionSpeed();
     </script>
 </body>
 
