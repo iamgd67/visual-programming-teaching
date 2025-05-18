@@ -83,6 +83,12 @@
         <button id="example-button" class="bg-green-500 text-white p-2 rounded-md hover:bg-green-600">写出刘字示例</button>
     </div>
 
+    <!-- 新增指令粘贴功能 -->
+    <div class="mt-4 flex gap-2 items-center">
+        <input type="text" id="commands-input" placeholder="在此粘贴指令序列" class="p-2 border rounded-md w-[600px]">
+        <button id="paste-button" class="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">导入指令</button>
+    </div>
+
     <script>
         const board = document.getElementById('board');
         const commandDisplay = document.getElementById('command-display');
@@ -413,12 +419,19 @@
         // 绑定执行按钮点击事件
         executeButton.addEventListener('click', () => {
             if (isExecuting) return;
+            // 显示当前指令到输入框
+            commandsInput.value = commands.join('');
             executeCommandsSequentially(commands);
         });
 
         // 绑定清除按钮点击事件
         clearButton.addEventListener('click', () => {
             if (isExecuting) return;
+
+            // 在清除前输出当前指令到控制台
+            console.log('即将清除的指令序列:', commands.join(''));
+            commandsInput.value = commands.join('');
+            console.log('指令含义: u=上, d=下, l=左, r=右, f=填充');
 
             // 清空指令
             commands = [];
@@ -439,6 +452,50 @@
 
         // 绑定演示模式开关事件
         demoModeCheckbox.addEventListener('change', toggleDemoMode);
+
+        // 验证指令是否合法
+        function isValidCommand(command) {
+            return ['u', 'd', 'l', 'r', 'f'].includes(command);
+        }
+
+        // 新增指令粘贴功能
+        const commandsInput = document.getElementById('commands-input');
+        const pasteButton = document.getElementById('paste-button');
+
+        pasteButton.addEventListener('click', () => {
+            if (isExecuting) return;
+
+            const inputCommands = commandsInput.value.toLowerCase().split('');
+            const validCommands = inputCommands.filter(cmd => isValidCommand(cmd));
+
+            if (validCommands.length === 0) {
+                alert('没有找到有效的指令！\n有效指令：u=上, d=下, l=左, r=右, f=填充');
+                return;
+            }
+
+            if (validCommands.length !== inputCommands.length) {
+                alert('部分指令无效，仅导入有效指令。\n有效指令：u=上, d=下, l=左, r=右, f=填充');
+            }
+
+            // 清空现有指令
+            commands = [];
+            commandDisplay.innerHTML = '';
+
+            // 添加新指令
+            validCommands.forEach(command => {
+                commands.push(command);
+                addCommandToDisplay(command);
+            });
+
+            // 清空输入框
+            commandsInput.value = '';
+
+            // 重置当前位置
+            removeCurrentCellMarker();
+            currentX = 0;
+            currentY = 0;
+            markCurrentCell();
+        });
 
         // 初始化当前格子标记
         markCurrentCell();
